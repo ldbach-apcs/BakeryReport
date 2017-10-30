@@ -1,0 +1,10 @@
+C:\Users\Duy-Bach\source\repos\BakeryReport\BakeryReport\bin\Debug\BakeryReport.exe.config
+C:\Users\Duy-Bach\source\repos\BakeryReport\BakeryReport\bin\Debug\BakeryReport.exe
+C:\Users\Duy-Bach\source\repos\BakeryReport\BakeryReport\bin\Debug\BakeryReport.pdb
+C:\Users\Duy-Bach\source\repos\BakeryReport\BakeryReport\obj\Debug\BakeryReport.FormAddIngridient.resources
+C:\Users\Duy-Bach\source\repos\BakeryReport\BakeryReport\obj\Debug\BakeryReport.FormMaster.resources
+C:\Users\Duy-Bach\source\repos\BakeryReport\BakeryReport\obj\Debug\BakeryReport.Properties.Resources.resources
+C:\Users\Duy-Bach\source\repos\BakeryReport\BakeryReport\obj\Debug\BakeryReport.csproj.GenerateResource.Cache
+C:\Users\Duy-Bach\source\repos\BakeryReport\BakeryReport\obj\Debug\BakeryReport.csproj.CoreCompileInputs.cache
+C:\Users\Duy-Bach\source\repos\BakeryReport\BakeryReport\obj\Debug\BakeryReport.exe
+C:\Users\Duy-Bach\source\repos\BakeryReport\BakeryReport\obj\Debug\BakeryReport.pdb
