@@ -83,9 +83,15 @@ IF NOT EXISTS (SELECT * FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = N'TonK
 		Primary Key (tkNgay, nlName),
 		Foreign Key (nlName) References dbo.NguyenLieu(nlName)
 	);
-
 GO
 
+-- Triggers
+--IF NOT EXISTS (SELECT * FROM sys.objects WHERE type = 'TR' AND name = N'tr_AddStock')
+--	Create Trigger dbo.tr_AddStock 
+--
+
+
+-- Stored-Procedure
 -- check existence before adding
 -- Procedure for adding Ingridient
 --IF NOT EXISTS (SELECT * FROM sys.sysobjects WHERE id = object_id(N'[dbo].[sp_IngridientAdd]') AND type in (N'P'))
@@ -116,10 +122,24 @@ As Begin
 	Set nlGia = (nlGia + @nlGia) / (@nlSoLuong + nlTonKho), nlTonKho = nlTonKho + @nlSoLuong
 	Where (nlName = @nlName);
 
-	-- Add to NhapXuatKho and NoiDungNhapXuat
-	--If Exists (Select * From dbo.NhapXuatKho WHERE nxNgay = @)
+	-- Create NhapXuatKho Log if not exists
+	If Not Exists (Select * From dbo.NhapXuatKho WHERE nxNgay = @tkNgay And nxLoai = @type)
+		Insert Into dbo.NhapXuatKho Values (@type, @tkNgay);
+
+	-- Add current item to NhapXuatKho Log
+	Delete From dbo.NoiDungNhapXuat
+	Where (nxLoai = @type And nxNgay = @tkNgay And nlName = @nlName);
+
+	Insert Into dbo.NoiDungNhapXuat
+	Values (@type, @tkNgay, @nlName, @nlGia, @nlSoLuong);
 End
 GO
+
+Create Procedure dbo.sp_GetListIngridient
+As Begin
+	Select * From dbo.NguyenLieu;
+End
+
 
 /*
 -- Insert ingredients
