@@ -86,59 +86,91 @@ IF NOT EXISTS (SELECT * FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = N'TonK
 GO
 
 -- Triggers
---IF NOT EXISTS (SELECT * FROM sys.objects WHERE type = 'TR' AND name = N'tr_AddStock')
---	Create Trigger dbo.tr_AddStock 
---
+-- Nhập kho hoặc xuất kho sẽ thay đổi nội dung bảng TonKho
+-- Nhập Kho được gọi khi nhập Stock, Xuất kho được gọi khi hoàn thành báo cáo ngày
+-- Nhập Stock và nhập báo cáo ngày sẽ thay đổi tồn (và giá) của nguyên liệu
+-- không cần xử lý ở đây
+GO
+IF NOT EXISTS (SELECT * FROM sys.objects WHERE type = 'TR' AND name = N'tr_AddStock')
+	Exec('Create Trigger dbo.tr_AddStock On dbo.NoiDungNhapXuat
+	After Insert 
+	As Begin
+		Declare @nxNgay Date, @nxNguyenLieu nchar(30), 
+				@nlGia int, @nlSoLuong float,
+				@nxLoai int;
+		Select 	@nxNgay = nxNgay, @nxNguyenLieu = nlName,
+				@nlGia = nlGia, @nlSoLuong = nlSoLuong,
+				@nxLoai = nxLoai
+		FROM 	Inserted;
 
-
+	End;')
+GO
 -- Stored-Procedure
 -- check existence before adding
 -- Procedure for adding Ingridient
---IF NOT EXISTS (SELECT * FROM sys.sysobjects WHERE id = object_id(N'[dbo].[sp_IngridientAdd]') AND type in (N'P'))
-Create Procedure dbo.sp_IngridientAdd 
-	@nlName nchar(30),
-	@nlGia int,
-	@nlSoLuong float
-As Begin
-	-- May throw SQLException here
-	Insert Into dbo.NguyenLieu values (@nlName, @nlGia, @nlSoLuong);
-	Declare @curDate Date;
-	Set @curDate = GETDATE();
-	Insert Into dbo.TonKho values (@curDate, @nlName, @nlGia, @nlSoLuong);
-End
+IF NOT EXISTS (SELECT * FROM sys.sysobjects WHERE id = object_id(N'[dbo].[sp_IngridientAdd]') AND type in (N'P'))
+	Exec('Create Procedure dbo.sp_IngridientAdd 
+		@nlName nchar(30),
+		@nlGia int,
+		@nlSoLuong float
+	As Begin
+		-- May throw SQLException here
+		Insert Into dbo.NguyenLieu values (@nlName, @nlGia, @nlSoLuong);
+		Declare @curDate Date;
+		Set @curDate = GETDATE();
+		Insert Into dbo.TonKho values (@curDate, @nlName, @nlGia, @nlSoLuong);
+	End')
 GO
 
-Create Procedure dbo.sp_StockAdd 
-	@tkNgay date,
-	@nlName nchar(30),
-	@nlGia int,
-	@nlSoLuong float
-As Begin 
-	Declare @type int;
-	Set @type = 0; -- Nhập
+IF NOT EXISTS (SELECT * FROM sys.sysobjects WHERE id = object_id(N'[dbo].[sp_StockAdd]') AND type in (N'P'))
+	Exec('Create Procedure dbo.sp_StockAdd 
+		@tkNgay date,
+		@nlName nchar(30),
+		@nlGia int,
+		@nlSoLuong float
+	As Begin 
+		Declare @type int;
+		Set @type = 0; -- Nhập
 
-	-- Update NguyenLieu
-	Update dbo.NguyenLieu
-	Set nlGia = (nlGia + @nlGia) / (@nlSoLuong + nlTonKho), nlTonKho = nlTonKho + @nlSoLuong
-	Where (nlName = @nlName);
+		-- Update NguyenLieu
+		Update dbo.NguyenLieu
+		Set nlGia = (nlGia + @nlGia) / (@nlSoLuong + nlTonKho), nlTonKho = nlTonKho + @nlSoLuong
+		Where (nlName = @nlName);
 
-	-- Create NhapXuatKho Log if not exists
-	If Not Exists (Select * From dbo.NhapXuatKho WHERE nxNgay = @tkNgay And nxLoai = @type)
-		Insert Into dbo.NhapXuatKho Values (@type, @tkNgay);
+		-- Create NhapXuatKho Log if not exists
+		If Not Exists (Select * From dbo.NhapXuatKho WHERE nxNgay = @tkNgay And nxLoai = @type)
+			Insert Into dbo.NhapXuatKho Values (@type, @tkNgay);
 
-	-- Add current item to NhapXuatKho Log
-	Delete From dbo.NoiDungNhapXuat
-	Where (nxLoai = @type And nxNgay = @tkNgay And nlName = @nlName);
+		-- Add current item to NhapXuatKho Log
+		Delete From dbo.NoiDungNhapXuat
+		Where (nxLoai = @type And nxNgay = @tkNgay And nlName = @nlName);
 
-	Insert Into dbo.NoiDungNhapXuat
-	Values (@type, @tkNgay, @nlName, @nlGia, @nlSoLuong);
-End
+		Insert Into dbo.NoiDungNhapXuat
+		Values (@type, @tkNgay, @nlName, @nlGia, @nlSoLuong);
+	End')
 GO
 
-Create Procedure dbo.sp_GetListIngridient
-As Begin
-	Select * From dbo.NguyenLieu;
-End
+GO
+IF NOT EXISTS (SELECT * FROM sys.sysobjects WHERE id = object_id(N'[dbo].[sp_GetListIngridient]') AND type in (N'P'))
+	Exec('Create Procedure dbo.sp_GetListIngridient
+	As Begin
+		Select * From dbo.NguyenLieu;
+	End')
+GO
+-- Bảng sẽ ảnh hưởng sau khi làm bánh:
+-- NoiDungBaoCao, BaoCaoNgay, NguyenLieu, TonKho
+IF NOT EXISTS 
+	(SELECT * FROM sys.sysobjects WHERE id = object_id(N'[dbo].[sp_MakeCake]') AND type in (N'P'))
+	Exec('Create Procedure dbo.sp_MakeCake 
+		@sxNgay date,
+		@bName nchar(30),
+		@bSoLuong int
+	As Begin
+
+		Select * From dbo.NguyenLieu;
+	End')
+GO
+
 
 
 /*
@@ -176,11 +208,14 @@ Insert into dbo.NguyenLieu(nlName, nlGia) values
 	(N'Mức thơm', 30000);
 */
 
+/*
 -- Syntatic checking, delete all table after creating
 -- Comment following lines out for proper usage
 -- Start procedure deletion
 Drop Procedure dbo.sp_IngridientAdd;
 Drop Procedure dbo.sp_StockAdd;
+Drop Procedure dbo.sp_GetListIngridient;
+Drop Procedure dbo.sp_MakeCake;
 -- End procedure deletion
 -- Start Table deletion
 drop table dbo.TonKho
@@ -192,3 +227,4 @@ drop table dbo.CongThuc;
 drop table dbo.Banh;
 drop table dbo.NguyenLieu;
 --  End Table deletion
+*/

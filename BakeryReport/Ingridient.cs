@@ -7,8 +7,8 @@ namespace BakeryReport
 {
     public class Ingridient
     {
-        String name;
-        int price;
-        float stock;
+        public string nlName { get; set; }
+        public int nlGia { get; set; }
+        public float nlTonKho { get; set; }
     }
 }

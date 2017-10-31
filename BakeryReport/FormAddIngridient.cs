@@ -28,6 +28,8 @@ namespace BakeryReport
             price = int.Parse(txt_Price.Text);
             quantity = float.Parse(txt_quantity.Text);
             // TODO: Call database to Insert
+            (new DatabaseHelper()).DbAddIngridient(ingridientName, price, quantity);
+            this.Close();
         }
 
         /* Only accepts integer here

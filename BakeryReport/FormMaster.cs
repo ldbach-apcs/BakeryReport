@@ -14,6 +14,8 @@ namespace BakeryReport
         public FormMaster()
         {
             InitializeComponent();
+            // DatabaseHelper helper = new DatabaseHelper();
+            // helper.InitDatabase();
         }
 
         /* 
@@ -21,9 +23,16 @@ namespace BakeryReport
          */
         private void btn_addIngridient_Click(object sender, EventArgs e)
         {
-            Form addForm = new FormAddIngridient();
-            addForm.StartPosition = FormStartPosition.CenterParent;
-            addForm.ShowDialog();
+            Form addIngridientForm = new FormAddIngridient();
+            addIngridientForm.StartPosition = FormStartPosition.CenterParent;
+            addIngridientForm.ShowDialog();
+        }
+
+        private void btn_addStock_Click(object sender, EventArgs e)
+        {
+            Form addStockForm = new FormAddStock();
+            addStockForm.StartPosition = FormStartPosition.CenterParent;
+            addStockForm.ShowDialog();
         }
     }
 }

@@ -54,6 +54,7 @@
             this.btn_addStock.TabIndex = 1;
             this.btn_addStock.Text = "Nhập kho";
             this.btn_addStock.UseVisualStyleBackColor = true;
+            this.btn_addStock.Click += new System.EventHandler(this.btn_addStock_Click);
             // 
             // btn_addRecipe
             // 
