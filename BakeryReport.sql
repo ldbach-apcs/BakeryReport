@@ -77,18 +77,49 @@ IF NOT EXISTS (SELECT * FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = N'TonK
 	CREATE TABLE dbo.TonKho (
 		tkNgay date,
 		nlName nchar(30),
-		nlTonKho float,
 		nlGia int,
+		nlTonKho float,
 
 		Primary Key (tkNgay, nlName),
 		Foreign Key (nlName) References dbo.NguyenLieu(nlName)
 	);
 
+GO
+
 -- check existence before adding
 -- Procedure for adding Ingridient
-IF NOT EXISTS (SELECT * FROM sys.sysobjects WHERE id = object_id(N'[dbo].[sp_Ingridient_Add]') AND type in (N'P', N'PC'))
-CREATE PROCEDURE dbo.xxx
+--IF NOT EXISTS (SELECT * FROM sys.sysobjects WHERE id = object_id(N'[dbo].[sp_IngridientAdd]') AND type in (N'P'))
+Create Procedure dbo.sp_IngridientAdd 
+	@nlName nchar(30),
+	@nlGia int,
+	@nlSoLuong float
+As Begin
+	-- May throw SQLException here
+	Insert Into dbo.NguyenLieu values (@nlName, @nlGia, @nlSoLuong);
+	Declare @curDate Date;
+	Set @curDate = GETDATE();
+	Insert Into dbo.TonKho values (@curDate, @nlName, @nlGia, @nlSoLuong);
+End
+GO
 
+Create Procedure dbo.sp_StockAdd 
+	@tkNgay date,
+	@nlName nchar(30),
+	@nlGia int,
+	@nlSoLuong float
+As Begin 
+	Declare @type int;
+	Set @type = 0; -- Nhập
+
+	-- Update NguyenLieu
+	Update dbo.NguyenLieu
+	Set nlGia = (nlGia + @nlGia) / (@nlSoLuong + nlTonKho), nlTonKho = nlTonKho + @nlSoLuong
+	Where (nlName = @nlName);
+
+	-- Add to NhapXuatKho and NoiDungNhapXuat
+	--If Exists (Select * From dbo.NhapXuatKho WHERE nxNgay = @)
+End
+GO
 
 /*
 -- Insert ingredients
@@ -125,15 +156,12 @@ Insert into dbo.NguyenLieu(nlName, nlGia) values
 	(N'Mức thơm', 30000);
 */
 
-
-
-
-
-
-
-
 -- Syntatic checking, delete all table after creating
 -- Comment following lines out for proper usage
+-- Start procedure deletion
+Drop Procedure dbo.sp_IngridientAdd;
+Drop Procedure dbo.sp_StockAdd;
+-- End procedure deletion
 -- Start Table deletion
 drop table dbo.TonKho
 drop table dbo.NoiDungNhapXuat
