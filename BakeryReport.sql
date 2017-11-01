@@ -96,12 +96,23 @@ IF NOT EXISTS (SELECT * FROM sys.objects WHERE type = 'TR' AND name = N'tr_AddSt
 	After Insert 
 	As Begin
 		Declare @nxNgay Date, @nxNguyenLieu nchar(30), 
-				@nlGia int, @nlSoLuong float,
-				@nxLoai int;
-		Select 	@nxNgay = nxNgay, @nxNguyenLieu = nlName,
-				@nlGia = nlGia, @nlSoLuong = nlSoLuong,
-				@nxLoai = nxLoai
-		FROM 	Inserted;
+				@nlGia int, @nlSoLuong float;
+
+		Select 	@nxNgay = nxNgay, @nxNguyenLieu = nlName
+		From	Inserted;
+
+		Select	@nlGia = nlGia, @nlSoLuong = nlTonKho
+		From	dbo.NguyenLieu
+		Where	nlName = @nxNguyenLieu
+
+		--- Update TonKho
+		-- Xóa Tồn Kho cũ của Nguyên liệu
+		Delete From dbo.TonKho
+		Where (tkNgay = @nxNgay and nlName = @nxNguyenLieu)
+
+		-- Thêm Tồn kho của nguyên liệu
+		Insert Into dbo.TonKho
+		Values (@nxNgay, @nxNguyenLieu, @nlGia, @nlSoLuong);
 
 	End;')
 GO
@@ -166,8 +177,24 @@ IF NOT EXISTS
 		@bName nchar(30),
 		@bSoLuong int
 	As Begin
+		-- Use cursor to fetch ingridients needed for given Banh
+		Declare @nlName nchar(30), @ctDinhLuong float;
+		
+		Declare nlCursor Cursor For
+		Select nlName, ctDinhLuong 
+		From dbo.CongThuc
+		Where bName = @bName;
 
-		Select * From dbo.NguyenLieu;
+		-- For each Ingridient, multiply it by bSoLuong
+		-- and XuatKho coresponding
+		Fetch Next From nlCursor
+		Into @nlName, @ctDinhLuong
+		While @@Fetch_Status = 0
+		Begin
+			
+
+		End
+
 	End')
 GO
 
