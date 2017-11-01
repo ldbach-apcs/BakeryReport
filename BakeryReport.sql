@@ -178,6 +178,9 @@ IF NOT EXISTS (SELECT * FROM sys.sysobjects Where id = OBJECT_ID(N'[dbo].[sp_Rev
 		Set nlGia = (nlGia * nlTonKho - @quantity * @price) /  (nlTonKho - @quantity),
 			nlTonKho = nlTonKho - @quantity
 		Where nlName = @nlName;
+
+		Delete From dbo.NoiDungNhapXuat
+		Where nxLoai = 0 and nxNgay = @date and nlName = @nlName;
 	End');
 GO
 
