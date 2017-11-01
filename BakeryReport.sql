@@ -68,7 +68,7 @@ IF NOT EXISTS (SELECT * FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = N'NoiD
 		nlSoLuong float,
 		nlGia int,
 
-		Primary Key (nxLoai, nxNgay),
+		Primary Key (nxLoai, nxNgay, nlName),
 		Foreign Key (nxLoai, nxNgay) References dbo.NhapXuatKho(nxLoai, nxNgay),
 		Foreign Key (nlName) References dbo.NguyenLieu(nlName)
 	);
@@ -97,7 +97,6 @@ IF NOT EXISTS (SELECT * FROM sys.objects WHERE type = 'TR' AND name = N'tr_AddSt
 	As Begin
 		Declare @nxNgay Date, @nxNguyenLieu nchar(30), 
 				@nlGia int, @nlSoLuong float;
-
 		Select 	@nxNgay = nxNgay, @nxNguyenLieu = nlName
 		From	Inserted;
 
@@ -116,11 +115,12 @@ IF NOT EXISTS (SELECT * FROM sys.objects WHERE type = 'TR' AND name = N'tr_AddSt
 
 	End;')
 GO
+
 -- Stored-Procedure
 -- check existence before adding
 -- Procedure for adding Ingridient
-IF NOT EXISTS (SELECT * FROM sys.sysobjects WHERE id = object_id(N'[dbo].[sp_IngridientAdd]') AND type in (N'P'))
-	Exec('Create Procedure dbo.sp_IngridientAdd 
+IF NOT EXISTS (SELECT * FROM sys.sysobjects WHERE id = object_id(N'[dbo].[sp_AddNguyenLieu]') AND type in (N'P'))
+	Exec('Create Procedure dbo.sp_AddNguyenLieu 
 		@nlName nchar(30),
 		@nlGia int,
 		@nlSoLuong float
@@ -133,8 +133,8 @@ IF NOT EXISTS (SELECT * FROM sys.sysobjects WHERE id = object_id(N'[dbo].[sp_Ing
 	End')
 GO
 
-IF NOT EXISTS (SELECT * FROM sys.sysobjects WHERE id = object_id(N'[dbo].[sp_StockAdd]') AND type in (N'P'))
-	Exec('Create Procedure dbo.sp_StockAdd 
+IF NOT EXISTS (SELECT * FROM sys.sysobjects WHERE id = object_id(N'[dbo].[sp_AddStock]') AND type in (N'P'))
+	Exec('Create Procedure dbo.sp_AddStock 
 		@tkNgay date,
 		@nlName nchar(30),
 		@nlGia int,
@@ -143,25 +143,44 @@ IF NOT EXISTS (SELECT * FROM sys.sysobjects WHERE id = object_id(N'[dbo].[sp_Sto
 		Declare @type int;
 		Set @type = 0; -- Nhập
 
-		-- Update NguyenLieu
-		Update dbo.NguyenLieu
-		Set nlGia = (nlGia + @nlGia) / (@nlSoLuong + nlTonKho), nlTonKho = nlTonKho + @nlSoLuong
-		Where (nlName = @nlName);
-
 		-- Create NhapXuatKho Log if not exists
 		If Not Exists (Select * From dbo.NhapXuatKho WHERE nxNgay = @tkNgay And nxLoai = @type)
 			Insert Into dbo.NhapXuatKho Values (@type, @tkNgay);
 
-		-- Add current item to NhapXuatKho Log
-		Delete From dbo.NoiDungNhapXuat
-		Where (nxLoai = @type And nxNgay = @tkNgay And nlName = @nlName);
-
 		Insert Into dbo.NoiDungNhapXuat
-		Values (@type, @tkNgay, @nlName, @nlGia, @nlSoLuong);
+		Values (@type, @tkNgay, @nlName, @nlSoLuong, @nlGia);
+
+
+		-- Update NguyenLieu
+		Select @nlGia = (nlGia * nlTonKho + @nlGia * @nlSoLuong) / (@nlSoLuong + nlTonKho), @nlSoLuong  = nlTonKho + @nlSoLuong
+		From dbo.NguyenLieu
+		Where (nlName = @nlName);
+
+		Update dbo.NguyenLieu
+		Set nlGia = @nlGia, nlTonKho = @nlSoLuong
+		Where (nlName = @nlName);
+
+				
 	End')
 GO
 
+IF NOT EXISTS (SELECT * FROM sys.sysobjects Where id = OBJECT_ID(N'[dbo].[sp_RevertAddStock]') AND type in (N'P'))
+	Exec('Create Procedure dbo.sp_RevertAddStock @nxNgay date, @nlName nchar(30)
+	As Begin
+		-- No need to remove NhapXuatKho, only modified the content
+		Declare @quantity float, @price int;
+		
+		Select @quantity = nlSoLuong, @price = nlGia
+		From dbo.NoiDungNhapXuat
+		Where nxLoai = 0 And nxNgay = @nxNgay And nlName = @nlName;
+
+		Update dbo.NguyenLieu 
+		Set nlGia = (nlGia * nlTonKho - @quantity * @price) /  (nlTonKho - @quantity),
+			nlTonKho = nlTonKho - @quantity
+		Where nlName = @nlName;
+	End');
 GO
+
 IF NOT EXISTS (SELECT * FROM sys.sysobjects WHERE id = object_id(N'[dbo].[sp_GetListIngridient]') AND type in (N'P'))
 	Exec('Create Procedure dbo.sp_GetListIngridient
 	As Begin
@@ -177,6 +196,13 @@ IF NOT EXISTS
 		@bName nchar(30),
 		@bSoLuong int
 	As Begin
+		-- Handle the case where there is already a MakeCake for today :)
+		-- For each type of Banh, if there already in XuatKho for today
+		-- 1.	Remove from NoiDungNhapXuat
+		-- 2.	Create trigger on deletion of NoiDungNhapXuat 
+		--		to revert changes
+		-- Hahaha I dont know how :) :) :) :) :) :) :)
+
 		-- Use cursor to fetch ingridients needed for given Banh
 		Declare @nlName nchar(30), @ctDinhLuong float;
 		
@@ -191,7 +217,7 @@ IF NOT EXISTS
 		Into @nlName, @ctDinhLuong
 		While @@Fetch_Status = 0
 		Begin
-			
+			Declare @randomThing int;
 
 		End
 
@@ -239,8 +265,9 @@ Insert into dbo.NguyenLieu(nlName, nlGia) values
 -- Syntatic checking, delete all table after creating
 -- Comment following lines out for proper usage
 -- Start procedure deletion
-Drop Procedure dbo.sp_IngridientAdd;
-Drop Procedure dbo.sp_StockAdd;
+Drop Procedure dbo.sp_RevertAddStock;
+Drop Procedure dbo.sp_AddNguyenLieu;
+Drop Procedure dbo.sp_AddStock;
 Drop Procedure dbo.sp_GetListIngridient;
 Drop Procedure dbo.sp_MakeCake;
 -- End procedure deletion
