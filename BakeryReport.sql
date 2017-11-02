@@ -16,7 +16,8 @@ IF NOT EXISTS (SELECT * FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = N'Nguy
 
 IF NOT EXISTS (SELECT * FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = N'Banh')
 	CREATE TABLE dbo.Banh (
-		bName nchar(30) Primary Key
+		bName nchar(30) Primary Key,
+		bGiaBan int
 	);
 
 IF NOT EXISTS (SELECT * FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = N'CongThuc')
@@ -91,7 +92,6 @@ GO
 -- Nhập Stock và nhập báo cáo ngày sẽ thay đổi tồn (và giá) của nguyên liệu
 -- không cần xử lý ở đây
 GO
-/*
 IF NOT EXISTS (SELECT * FROM sys.objects WHERE type = 'TR' AND name = N'tr_AddStock')
 	Exec('Create Trigger dbo.tr_AddStock On dbo.NoiDungNhapXuat
 	After Insert 
@@ -116,7 +116,6 @@ IF NOT EXISTS (SELECT * FROM sys.objects WHERE type = 'TR' AND name = N'tr_AddSt
 
 	End;')
 GO
-*/
 
 -- Stored-Procedure
 -- check existence before adding
@@ -230,7 +229,11 @@ IF NOT EXISTS
 			Declare @nlGia int;
 			Select @nlGia = nlGia From dbo.NguyenLieu Where @nlName = nlName;
 
-			--If Not Exists (Select * From dbo.NoiDungNhapXuat Where nlName = @nlName And nxLoai = 1 And nxNgay = @nxNgay)
+			Update dbo.NguyenLieu
+			Set nlTonKho = nlTonKho - @ctDinhLuong * @bSoLuong
+			Where nlName = @nlName;
+
+			If Not Exists (Select * From dbo.NoiDungNhapXuat Where nlName = @nlName And nxLoai = 1 And nxNgay = @nxNgay)
 				Insert Into dbo.NoiDungNhapXuat Values (1, @nxNgay, @nlName, 0, @nlgia); 
 
 			Update dbo.NoiDungNhapXuat
@@ -246,8 +249,34 @@ IF NOT EXISTS
 	End')
 GO
 
+IF NOT EXISTS (SELECT * FROM sys.sysobjects WHERE id = object_id(N'[dbo].[sp_AddReport]') AND type in (N'P'))
+	Exec('Create Procedure dbo.sp_AddReport
+		@bcNgay date,
+		@bcLoai int,
+		@bName nchar(30),
+		@bSoLuong int
+	As Begin
+		If Not Exists (Select * From dbo.BaoCao Where bcLoai = @bcLoai And @bcNgay = bcNgay)
+			Insert Into dbo.BaoCao Values (@bcLoai, @bcNgay);
+		
+		Delete From dbo.NoiDungBaoCao
+		Where bcLoai = @bcLoai And bcNgay = @bcNgay And bName = @bName;
 
+		Declare @bThanhTien int;
+		Select @bThanhTien = bGiaBan
+		From dbo.Banh
+		Where bName = @bName;
 
+		Insert Into dbo.NoiDungBaoCao
+		Values (@bcLoai, @bcNgay, @bName, @bSoLuong, @bThanhTien);
+
+		If (@bcLoai = 0) -- San Xuat
+		Begin
+			Exec dbo.sp_MakeCake @bcNgay, @bName, @bSoLuong;
+			Return;
+		End;
+	End')
+GO
 /*
 -- Insert ingredients
 Insert into dbo.NguyenLieu(nlName, nlGia) values 
