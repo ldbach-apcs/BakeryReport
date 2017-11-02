@@ -165,8 +165,46 @@ IF NOT EXISTS (SELECT * FROM sys.sysobjects WHERE id = object_id(N'[dbo].[sp_Add
 	End')
 GO
 
+IF NOT EXISTS (SELECT * FROM sys.sysobjects where id = OBJECT_ID(N'[dbo].[sp_RevertMakeCake]') AND type in (N'P'))
+	Exec('Create Procedure dbo.sp_RevertMakeCake
+		@nxNgay date,
+		@bName nchar(30),
+		@bSoLuong int
+	As Begin
+		Declare @nlName nchar(30), @ctDinhLuong float;
+		
+		Declare nlCursor Cursor For
+		Select nlName, ctDinhLuong
+		From dbo.CongThuc
+		Where bName = @bName;
+
+		-- For each Ingridient, multiply it by bSoLuong
+		-- and Nhập kho coresponding
+		Open nlCursor;
+
+		Fetch Next From nlCursor Into @nlName, @ctDinhLuong;
+		While @@Fetch_Status = 0
+		Begin
+			Update dbo.NguyenLieu
+			Set nlTonKho = nlTonKho + @ctDinhLuong * @bSoLuong
+			Where nlName = @nlName;
+
+			Update dbo.NoiDungNhapXuat
+			Set nlSoLuong = nlSoLuong - @ctDinhLuong * @bSoLuong
+			Where nxLoai = 1 And nlName = @nlName  And @nxNgay = @nxNgay;
+
+			Fetch Next From nlCursor Into @nlName, @ctDinhLuong;
+		End;
+
+		Close nlCursor;
+		Deallocate nlCursor;
+	End;')
+GO
+
 IF NOT EXISTS (SELECT * FROM sys.sysobjects Where id = OBJECT_ID(N'[dbo].[sp_RevertAddStock]') AND type in (N'P'))
-	Exec('Create Procedure dbo.sp_RevertAddStock @nxNgay date, @nlName nchar(30)
+	Exec('Create Procedure dbo.sp_RevertAddStock
+		@nxNgay date, 
+		@nlName nchar(30)
 	As Begin
 		-- No need to remove NhapXuatKho, only modified the content
 		Declare @quantity float, @price int;
@@ -193,8 +231,7 @@ IF NOT EXISTS (SELECT * FROM sys.sysobjects WHERE id = object_id(N'[dbo].[sp_Get
 GO
 -- Bảng sẽ ảnh hưởng sau khi làm bánh:
 -- NoiDungBaoCao, BaoCaoNgay, NguyenLieu, TonKho
-IF NOT EXISTS 
-	(SELECT * FROM sys.sysobjects WHERE id = object_id(N'[dbo].[sp_MakeCake]') AND type in (N'P'))
+IF NOT EXISTS (SELECT * FROM sys.sysobjects WHERE id = object_id(N'[dbo].[sp_MakeCake]') AND type in (N'P'))
 	Exec('Create Procedure dbo.sp_MakeCake 
 		@nxNgay date,
 		@bName nchar(30),
@@ -270,6 +307,7 @@ IF NOT EXISTS (SELECT * FROM sys.sysobjects WHERE id = object_id(N'[dbo].[sp_Add
 		Insert Into dbo.NoiDungBaoCao
 		Values (@bcLoai, @bcNgay, @bName, @bSoLuong, @bThanhTien);
 
+		-- Báo cáo Hủy và Báo cáo tồn không ảnh hưởng đến những bảng khác, không cần xử lý
 		If (@bcLoai = 0) -- San Xuat
 		Begin
 			Exec dbo.sp_MakeCake @bcNgay, @bName, @bSoLuong;
@@ -277,6 +315,36 @@ IF NOT EXISTS (SELECT * FROM sys.sysobjects WHERE id = object_id(N'[dbo].[sp_Add
 		End;
 	End')
 GO
+
+IF NOT EXISTS (SELECT * FROM sys.sysobjects WHERE id = OBJECT_ID(N'dbo.sp_RevertAddReport') AND type = N'P')
+	Exec('Create Procedure dbo.sp_RevertAddReport
+		@bcLoai int,
+		@bcNgay date
+	As Begin
+	
+		If (@bcLoai = 0) 	
+		Begin
+			Declare bcCursor Cursor For
+			Select bName, bSoLuong From NoiDungBaoCao Where bcLoai = @bcLoai And bcNgay = bcNgay
+
+			Declare @bName nchar(30), @bSoLuong int;
+			Open bcCursor;
+			Fetch Next From bcCursor into @bName, @bSoLuong;
+			While (@@Fetch_Status = 0) 
+			Begin
+				Exec dbo.sp_RevertMakeCake @bcNgay, @bName, @bSoLuong;
+				Fetch next From bcCursor into @bName, @bSoLuong;
+			End;
+
+			Close bcCursor
+			Deallocate bcCursor
+		End;
+
+		Delete From dbo.NoiDungBaoCao
+		Where bcLoai = @bcLoai And bcNgay = @bcNgay And bName = @bName;
+
+	End')
+Go
 /*
 -- Insert ingredients
 Insert into dbo.NguyenLieu(nlName, nlGia) values 
@@ -321,6 +389,8 @@ Drop Procedure dbo.sp_AddNguyenLieu;
 Drop Procedure dbo.sp_AddStock;
 Drop Procedure dbo.sp_GetListIngridient;
 Drop Procedure dbo.sp_MakeCake;
+Drop Procedure dbo.sp_RevertMakeCake;
+Drop Procedure dbo.sp_RevertAddReport;
 -- End procedure deletion
 -- Start Table deletion
 drop table dbo.TonKho

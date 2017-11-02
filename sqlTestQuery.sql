@@ -23,11 +23,21 @@ Values (@bName, @nlName, 3), (@bName, N'Nguyên liệu 2', 2);
 -- Test MakeCake
 Exec [dbo].sp_AddReport @d, 0, @bName, 1;
 
+
 --Exec [dbo].[sp_AddStock] @tkNgay=@d,@nlName=@name,@nlGia=@gia,@nlSoLuong=@soluong;
 --Exec [dbo].[sp_RevertAddStock] @nxNgay=@d,@nlName=@name;
+
+--Select * From dbo.NguyenLieu;
+--Select * From dbo.CongThuc;
+--Select * From dbo.TonKho;
+--Select * From dbo.NoiDungNhapXuat
+--Select * From dbo.NoiDungBaoCao;
+
+Exec dbo.sp_RevertAddReport 0, @d;
+
 Go
 
-	Select * From dbo.NguyenLieu;
+Select * From dbo.NguyenLieu;
 Select * From dbo.CongThuc;
 Select * From dbo.TonKho;
 Select * From dbo.NoiDungNhapXuat
