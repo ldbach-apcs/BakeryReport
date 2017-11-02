@@ -24,7 +24,7 @@ Values (@bName, @nlName, 3), (@bName, N'Nguyên liệu 2', 2);
 Exec [dbo].sp_AddReport @d, 0, @bName, 1;
 
 
---Exec [dbo].[sp_AddStock] @tkNgay=@d,@nlName=@name,@nlGia=@gia,@nlSoLuong=@soluong;
+Exec [dbo].[sp_AddStock]@d,@nlName,@gia,@soluong;
 --Exec [dbo].[sp_RevertAddStock] @nxNgay=@d,@nlName=@name;
 
 --Select * From dbo.NguyenLieu;

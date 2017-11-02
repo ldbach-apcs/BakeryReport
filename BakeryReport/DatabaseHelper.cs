@@ -50,5 +50,28 @@ namespace BakeryReport
 
             }
         }
+
+        internal void DbAddStock(string _nlName, int _nlGia, float _nlSoLuong)
+        {
+            // This make sure each sqlConection is terminated after usage
+            using (IDbConnection connection = new SqlConnection(CnnVal()))
+            {
+                DateTime dateTime = DateTime.Now;
+                connection.Execute(
+                    "dbo.sp_AddStock @ngay, @name, @gia, @soluong;",
+                    new { ngay = dateTime, name = _nlName, gia = _nlGia, soluong = _nlSoLuong});
+            }
+        }
+
+        internal void DbRevertAddStock(string _nlName)
+        {
+            using (IDbConnection connection = new SqlConnection(CnnVal()))
+            {
+                DateTime dateTime = DateTime.Now;
+                connection.Execute(
+                    "dbo.sp_RevertAddStock @ngay, @name;",
+                    new { ngay = dateTime, name = _nlName});
+            }
+        }
     }
 }
