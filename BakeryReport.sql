@@ -42,7 +42,7 @@ IF NOT EXISTS (SELECT * FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = N'NoiD
 	CREATE TABLE dbo.NoiDungBaoCao (
 		bcLoai int,
 		bcNgay date,
-		bName nchar(30), 
+		bName nchar(30),
 		bSoLuong int Not Null,
 		bThanhTien int,
 
@@ -91,6 +91,7 @@ GO
 -- Nhập Stock và nhập báo cáo ngày sẽ thay đổi tồn (và giá) của nguyên liệu
 -- không cần xử lý ở đây
 GO
+/*
 IF NOT EXISTS (SELECT * FROM sys.objects WHERE type = 'TR' AND name = N'tr_AddStock')
 	Exec('Create Trigger dbo.tr_AddStock On dbo.NoiDungNhapXuat
 	After Insert 
@@ -115,6 +116,7 @@ IF NOT EXISTS (SELECT * FROM sys.objects WHERE type = 'TR' AND name = N'tr_AddSt
 
 	End;')
 GO
+*/
 
 -- Stored-Procedure
 -- check existence before adding
@@ -180,7 +182,7 @@ IF NOT EXISTS (SELECT * FROM sys.sysobjects Where id = OBJECT_ID(N'[dbo].[sp_Rev
 		Where nlName = @nlName;
 
 		Delete From dbo.NoiDungNhapXuat
-		Where nxLoai = 0 and nxNgay = @date and nlName = @nlName;
+		Where nxLoai = 0 and nxNgay = @nxNgay and nlName = @nlName;
 	End');
 GO
 
@@ -195,7 +197,7 @@ GO
 IF NOT EXISTS 
 	(SELECT * FROM sys.sysobjects WHERE id = object_id(N'[dbo].[sp_MakeCake]') AND type in (N'P'))
 	Exec('Create Procedure dbo.sp_MakeCake 
-		@sxNgay date,
+		@nxNgay date,
 		@bName nchar(30),
 		@bSoLuong int
 	As Begin
@@ -210,19 +212,36 @@ IF NOT EXISTS
 		Declare @nlName nchar(30), @ctDinhLuong float;
 		
 		Declare nlCursor Cursor For
-		Select nlName, ctDinhLuong 
+		Select nlName, ctDinhLuong
 		From dbo.CongThuc
 		Where bName = @bName;
 
+		If Not Exists (Select * From dbo.NhapXuatKho Where nxLoai = 1 And nxNgay = @nxNgay)
+			Insert Into dbo.NhapXuatKho Values (1, @nxNgay);
+			
+
 		-- For each Ingridient, multiply it by bSoLuong
 		-- and XuatKho coresponding
-		Fetch Next From nlCursor
-		Into @nlName, @ctDinhLuong
+		Open nlCursor;
+
+		Fetch Next From nlCursor Into @nlName, @ctDinhLuong;
 		While @@Fetch_Status = 0
 		Begin
-			Declare @randomThing int;
+			Declare @nlGia int;
+			Select @nlGia = nlGia From dbo.NguyenLieu Where @nlName = nlName;
 
-		End
+			--If Not Exists (Select * From dbo.NoiDungNhapXuat Where nlName = @nlName And nxLoai = 1 And nxNgay = @nxNgay)
+				Insert Into dbo.NoiDungNhapXuat Values (1, @nxNgay, @nlName, 0, @nlgia); 
+
+			Update dbo.NoiDungNhapXuat
+			Set nlSoLuong = nlSoLuong + @ctDinhLuong * @bSoLuong
+			Where nxLoai = 1 And nlName = @nlName  And @nxNgay = @nxNgay;
+
+			Fetch Next From nlCursor Into @nlName, @ctDinhLuong;
+		End;
+
+		Close nlCursor;
+		Deallocate nlCursor;
 
 	End')
 GO
@@ -284,4 +303,7 @@ drop table dbo.CongThuc;
 drop table dbo.Banh;
 drop table dbo.NguyenLieu;
 --  End Table deletion
+use master
+go
+Drop database BakeryReport;
 */
