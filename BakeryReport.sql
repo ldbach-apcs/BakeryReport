@@ -98,10 +98,10 @@ IF NOT EXISTS (SELECT * FROM sys.objects WHERE type = 'TR' AND name = N'tr_AddSt
 	As Begin
 		Declare @nxNgay Date, @nxNguyenLieu nchar(30), 
 				@nlGia int, @nlSoLuong float;
-		Select 	@nxNgay = nxNgay, @nxNguyenLieu = nlName
+		Select 	@nxNgay = nxNgay, @nxNguyenLieu = nlName, @nlSoLuong = nlSoLuong
 		From	Inserted;
 
-		Select	@nlGia = nlGia, @nlSoLuong = nlTonKho
+		Select	@nlGia = nlGia, @nlSoLuong = nlTonKho + @nlSoLuong
 		From	dbo.NguyenLieu
 		Where	nlName = @nxNguyenLieu
 
@@ -120,17 +120,19 @@ GO
 -- Stored-Procedure
 -- check existence before adding
 -- Procedure for adding Ingridient
-IF NOT EXISTS (SELECT * FROM sys.sysobjects WHERE id = object_id(N'[dbo].[sp_AddNguyenLieu]') AND type in (N'P'))
-	Exec('Create Procedure dbo.sp_AddNguyenLieu 
+IF NOT EXISTS (SELECT * FROM sys.sysobjects WHERE id = object_id(N'[dbo].[sp_AddIngridient]') AND type in (N'P'))
+	Exec('Create Procedure dbo.sp_AddIngridient 
 		@nlName nchar(30),
 		@nlGia int,
 		@nlSoLuong float
 	As Begin
 		-- May throw SQLException here
-		Insert Into dbo.NguyenLieu values (@nlName, @nlGia, @nlSoLuong);
+		Insert Into dbo.NguyenLieu values (@nlName, @nlGia, 0);
 		Declare @curDate Date;
 		Set @curDate = GETDATE();
-		Insert Into dbo.TonKho values (@curDate, @nlName, @nlGia, @nlSoLuong);
+
+		Exec sp_AddStock @curDate, @nlName, @nlGia, @nlSoLuong
+		--Insert Into dbo.TonKho values (@curDate, @nlName, @nlGia, @nlSoLuong);
 	End')
 GO
 
@@ -148,6 +150,8 @@ IF NOT EXISTS (SELECT * FROM sys.sysobjects WHERE id = object_id(N'[dbo].[sp_Add
 		If Not Exists (Select * From dbo.NhapXuatKho WHERE nxNgay = @tkNgay And nxLoai = @type)
 			Insert Into dbo.NhapXuatKho Values (@type, @tkNgay);
 
+		Delete From dbo.NoiDungNhapXuat
+		Where nxLoai = @type And nxNgay = @tkNgay And nlName = @nlName;
 		Insert Into dbo.NoiDungNhapXuat
 		Values (@type, @tkNgay, @nlName, @nlSoLuong, @nlGia);
 
@@ -213,20 +217,59 @@ IF NOT EXISTS (SELECT * FROM sys.sysobjects Where id = OBJECT_ID(N'[dbo].[sp_Rev
 		From dbo.NoiDungNhapXuat
 		Where nxLoai = 0 And nxNgay = @nxNgay And nlName = @nlName;
 
+		-- - - - - - - - - -
 		Update dbo.NguyenLieu 
 		Set nlGia = (nlGia * nlTonKho - @quantity * @price) /  (nlTonKho - @quantity),
 			nlTonKho = nlTonKho - @quantity
-		Where nlName = @nlName;
+		Where nlName = @nlName And nlTonKho > @quantity;
+		-- - - - - - - - - -
+		Update dbo.NguyenLieu 
+		Set nlTonKho = nlTonKho - @quantity
+		Where nlName = @nlName And nlTonKho = @quantity;
+		-- - - - - - - - - - 
 
-		Delete From dbo.NoiDungNhapXuat
-		Where nxLoai = 0 and nxNgay = @nxNgay and nlName = @nlName;
+
+		--Delete From dbo.NoiDungNhapXuat
+		--Where nxLoai = 0 and nxNgay = @nxNgay and nlName = @nlName;
 	End');
 GO
 
 IF NOT EXISTS (SELECT * FROM sys.sysobjects WHERE id = object_id(N'[dbo].[sp_GetListIngridient]') AND type in (N'P'))
 	Exec('Create Procedure dbo.sp_GetListIngridient
 	As Begin
-		Select * From dbo.NguyenLieu;
+		Declare @today Date;
+		Set @today = GetDate();
+		Declare @new int;
+		Set @new = 0;
+
+		If Not Exists (Select * From dbo.NhapXuatKho Where nxLoai = 0 And nxNgay = @today)
+		Begin
+			Insert Into dbo.NhapXuatKho
+			Values (0, @today);
+			Set @new = 1;
+		End;
+
+		-- Foreach NguyenLieu add/or revert NoiDungNhapXuat
+		Declare nlCursor Cursor For
+		Select nlName, nlGia From NguyenLieu;
+		Declare @nlName nchar(30), @nlGia int;
+		Open nlCursor
+		Fetch Next From nlCursor into @nlName, @nlGia;
+		While (@@Fetch_Status = 0) 
+		Begin	
+			If (@new = 1)
+				Exec sp_AddStock @today, @nlName, @nlGia, 0;
+			If (@new = 0)
+				Exec sp_RevertAddStock @today, @nlName;
+	
+			Fetch Next From nlCursor into @nlName, @nlGia;
+		End
+		Close nlCursor;
+		Deallocate nlCursor;			
+
+		Select nlName, nlSoLuong, nlGia
+		From dbo.NoiDungNhapXuat
+		Where nxNgay = @today And nxLoai = 0;
 	End')
 GO
 -- Bảng sẽ ảnh hưởng sau khi làm bánh:
@@ -385,7 +428,7 @@ Insert into dbo.NguyenLieu(nlName, nlGia) values
 -- Comment following lines out for proper usage
 -- Start procedure deletion
 Drop Procedure dbo.sp_RevertAddStock;
-Drop Procedure dbo.sp_AddNguyenLieu;
+Drop Procedure dbo.sp_AddIngridient;
 Drop Procedure dbo.sp_AddStock;
 Drop Procedure dbo.sp_GetListIngridient;
 Drop Procedure dbo.sp_MakeCake;

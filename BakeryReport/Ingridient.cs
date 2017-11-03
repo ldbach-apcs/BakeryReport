@@ -9,6 +9,6 @@ namespace BakeryReport
     {
         public string nlName { get; set; }
         public int nlGia { get; set; }
-        public float nlTonKho { get; set; }
+        public float nlSoLuong { get; set; }
     }
 }

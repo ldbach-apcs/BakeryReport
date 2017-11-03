@@ -58,8 +58,6 @@ namespace BakeryReport
             for (int i = 0; i < table.RowCount; ++i)
             {
                 TextBox textBox = new TextBox();
-                textBox.Anchor =
-                    (AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Top | AnchorStyles.Right);
                 textBox.Text = string.Format("{0}", ingridients[i].nlGia);
                 table.Controls.Add(textBox, 2, i);
             }
@@ -73,10 +71,7 @@ namespace BakeryReport
             for (int i = 0; i < table.RowCount; ++i)
             {
                 TextBox textBox = new TextBox();
-                textBox.Anchor = 
-                    (AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Top | AnchorStyles.Right);
-
-                textBox.Text = string.Format("{0}", 0);
+                textBox.Text = string.Format("{0}", ingridients[i].nlSoLuong);
                 table.Controls.Add(textBox, 1, i);
             }
         }
@@ -92,8 +87,6 @@ namespace BakeryReport
             {
                 // Testing
                 Label label = new Label();
-                label.Anchor =
-                    (AnchorStyles.Bottom | AnchorStyles.Left | AnchorStyles.Top | AnchorStyles.Right);
                 label.Text = ingridients[i].nlName;
                 label.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
                 table.Controls.Add(label, 0, i);

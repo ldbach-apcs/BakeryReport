@@ -28,7 +28,7 @@ namespace BakeryReport
             using (IDbConnection cnn = new SqlConnection(CnnVal()))
             {
                 cnn.Execute(
-                    "dbo.sp_IngridientAdd @nlName, @nlGia, @nlSoLuong", 
+                    "dbo.sp_AddIngridient @nlName, @nlGia, @nlSoLuong", 
                     new { nlName = name, nlGia = price, nlSoLuong = quantity });
             }
         }

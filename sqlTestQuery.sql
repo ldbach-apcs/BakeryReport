@@ -11,7 +11,7 @@ Set @soluong = 5;
 -- Test insert NguyenLieu
 Insert into dbo.NguyenLieu
 Values (@nlName, @gia, @soluong), (N'Nguyên liệu 2', 10, 5);
-
+	
 -- Test insert Banh
 Insert into dbo.Banh
 Values (@bName, 20000);
@@ -36,9 +36,8 @@ Exec [dbo].[sp_AddStock]@d,@nlName,@gia,@soluong;
 Exec dbo.sp_RevertAddReport 0, @d;
 
 Go
+Exec dbo.sp_AddIngridient N'Trứng', 2200, 5;
 
 Select * From dbo.NguyenLieu;
-Select * From dbo.CongThuc;
 Select * From dbo.TonKho;
 Select * From dbo.NoiDungNhapXuat
-Select * From dbo.NoiDungBaoCao;
