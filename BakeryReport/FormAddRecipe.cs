@@ -37,12 +37,6 @@ namespace BakeryReport
         // Reflect data on a table
         private void UpdateUi()
         {
-            InitTable();
-        }
-
-        // Setting up the data table
-        private void InitTable()
-        {
             table = table_addRecipe;
             table.Controls.Clear();
             table.RowStyles.Clear();

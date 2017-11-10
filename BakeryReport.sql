@@ -235,7 +235,7 @@ IF NOT EXISTS (SELECT * FROM sys.sysobjects Where id = OBJECT_ID(N'[dbo].[sp_Rev
 	End');
 GO
 
-IF NOT EXISTS (SELECT * FROM sys.sysobjects WHERE id = object_id(N'[dbo].[GetStockIngridient]') AND type in (N'P'))
+IF NOT EXISTS (SELECT * FROM sys.sysobjects WHERE id = object_id(N'[dbo].[sp_GetStockIngridient]') AND type in (N'P'))
 	Exec('Create Procedure dbo.sp_GetStockIngridient
 	As Begin
 		Declare @today Date;
@@ -426,6 +426,17 @@ IF NOT EXISTS (SELECT * FROM sys.sysobjects WHERE id = OBJECT_ID(N'dbo.sp_AddToR
 	End')
 GO
 
+IF NOT EXISTS (SELECT * FROM sys.sysobjects WHERE id = OBJECT_ID(N'dbo.sp_ChangePrice') AND type = N'P')
+	Exec('Create Procedure dbo.sp_ChangePrice
+		@bName nchar(30),
+		@bGiaBan int
+	As Begin
+		Update dbo.Banh
+		Set bGiaBan = @bGiaBan
+		Where bname = @bName;
+	End')
+GO
+
 /*
 -- Insert ingredients
 Insert into dbo.NguyenLieu(nlName, nlGia) values 
@@ -477,6 +488,7 @@ Drop Procedure dbo.sp_RevertAddReport;
 Drop Procedure dbo.sp_GetCake;
 Drop Procedure dbo.sp_AddCake;
 Drop Procedure dbo.sp_AddToRecipe;
+Drop Procedure dbo.sp_ChangePrice;
 -- End procedure deletion
 -- Start Table deletion
 drop table dbo.TonKho

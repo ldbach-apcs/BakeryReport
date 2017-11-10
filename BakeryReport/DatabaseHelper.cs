@@ -108,5 +108,15 @@ namespace BakeryReport
                 }
             }
         }
+
+        internal void DbChangePrice(Cake cake)
+        {
+            using (IDbConnection cnn = new SqlConnection(CnnVal()))
+            {
+                cnn.Execute(
+                    "dbo.sp_ChangePrice @name, @newPrice",
+                    new { name = cake.bName, newPrice = cake.bGiaBan });
+            }
+        }
     }
 }

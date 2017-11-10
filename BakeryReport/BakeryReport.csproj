@@ -192,6 +192,12 @@
     <Compile Include="FormAddStock.Designer.cs">
       <DependentUpon>FormAddStock.cs</DependentUpon>
     </Compile>
+    <Compile Include="FormChangePrice.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="FormChangePrice.Designer.cs">
+      <DependentUpon>FormChangePrice.cs</DependentUpon>
+    </Compile>
     <Compile Include="FormMaster.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -209,6 +215,9 @@
     </EmbeddedResource>
     <EmbeddedResource Include="FormAddStock.resx">
       <DependentUpon>FormAddStock.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="FormChangePrice.resx">
+      <DependentUpon>FormChangePrice.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="FormMaster.resx">
       <DependentUpon>FormMaster.cs</DependentUpon>
