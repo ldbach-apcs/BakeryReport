@@ -34,5 +34,19 @@ namespace BakeryReport
             addStockForm.StartPosition = FormStartPosition.CenterParent;
             addStockForm.ShowDialog();
         }
+
+        private void btn_addRecipe_Click(object sender, EventArgs e)
+        {
+            Form addRecipeForm = new FormAddRecipe();
+            addRecipeForm.StartPosition = FormStartPosition.CenterParent;
+            addRecipeForm.ShowDialog();
+        }
+
+        private void btn_changePrice_Click(object sender, EventArgs e)
+        {
+            Form changePriceForm = new FormChangePrice();
+            changePriceForm.StartPosition = FormStartPosition.CenterParent;
+            changePriceForm.ShowDialog();
+        }
     }
 }

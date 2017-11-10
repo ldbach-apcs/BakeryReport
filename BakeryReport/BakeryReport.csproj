@@ -172,6 +172,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Cake.cs" />
     <Compile Include="FormAddIngridient.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -179,6 +180,12 @@
       <DependentUpon>FormAddIngridient.cs</DependentUpon>
     </Compile>
     <Compile Include="DatabaseHelper.cs" />
+    <Compile Include="FormAddRecipe.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="FormAddRecipe.Designer.cs">
+      <DependentUpon>FormAddRecipe.cs</DependentUpon>
+    </Compile>
     <Compile Include="FormAddStock.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -196,6 +203,9 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
     <EmbeddedResource Include="FormAddIngridient.resx">
       <DependentUpon>FormAddIngridient.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="FormAddRecipe.resx">
+      <DependentUpon>FormAddRecipe.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="FormAddStock.resx">
       <DependentUpon>FormAddStock.cs</DependentUpon>

@@ -64,6 +64,7 @@
             this.btn_addRecipe.TabIndex = 2;
             this.btn_addRecipe.Text = "Thêm bánh";
             this.btn_addRecipe.UseVisualStyleBackColor = true;
+            this.btn_addRecipe.Click += new System.EventHandler(this.btn_addRecipe_Click);
             // 
             // btn_changePrice
             // 
@@ -73,6 +74,7 @@
             this.btn_changePrice.TabIndex = 3;
             this.btn_changePrice.Text = "Đổi giá bán";
             this.btn_changePrice.UseVisualStyleBackColor = true;
+            this.btn_changePrice.Click += new System.EventHandler(this.btn_changePrice_Click);
             // 
             // btn_showStock
             // 

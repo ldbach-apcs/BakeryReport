@@ -35,6 +35,7 @@ IF NOT EXISTS (SELECT * FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = N'BaoC
 	CREATE TABLE dbo.BaoCao (
 		bcLoai int Check (bcLoai in (0, 1, 2)), -- Sản xuất / Tồn / Hủy
 		bcNgay date,
+		bGiaThanh int,
 
 		Primary Key (bcLoai, bcNgay)
 	);
@@ -234,8 +235,8 @@ IF NOT EXISTS (SELECT * FROM sys.sysobjects Where id = OBJECT_ID(N'[dbo].[sp_Rev
 	End');
 GO
 
-IF NOT EXISTS (SELECT * FROM sys.sysobjects WHERE id = object_id(N'[dbo].[sp_GetListIngridient]') AND type in (N'P'))
-	Exec('Create Procedure dbo.sp_GetListIngridient
+IF NOT EXISTS (SELECT * FROM sys.sysobjects WHERE id = object_id(N'[dbo].[GetStockIngridient]') AND type in (N'P'))
+	Exec('Create Procedure dbo.sp_GetStockIngridient
 	As Begin
 		Declare @today Date;
 		Set @today = GetDate();
@@ -388,6 +389,43 @@ IF NOT EXISTS (SELECT * FROM sys.sysobjects WHERE id = OBJECT_ID(N'dbo.sp_Revert
 
 	End')
 Go
+
+IF NOT EXISTS (SELECT * FROM sys.sysobjects WHERE id = OBJECT_ID(N'dbo.sp_GetRecipeIngridient') AND type = N'P')
+	Exec('Create Procedure dbo.sp_GetRecipeIngridient
+	As Begin
+		Select nlName as [nlName], nlGia as [nlGia], nlTonKho as [nlSoLuong]
+		From NguyenLieu;
+	End')
+GO
+
+IF NOT EXISTS (SELECT * FROM sys.sysobjects WHERE id = OBJECT_ID(N'dbo.sp_GetCake') AND type = N'P')
+	Exec('Create Procedure dbo.sp_GetCake
+	As Begin
+		Select * From dbo.Banh;
+	End')
+GO
+
+IF NOT EXISTS (SELECT * FROM sys.sysobjects WHERE id = OBJECT_ID(N'dbo.sp_AddCake') AND type = N'P')
+	Exec('Create Procedure dbo.sp_AddCake
+		@bName nchar(30),
+		@bGia int
+	As Begin
+		Insert Into dbo.Banh
+		Values (@bname, @bGia);
+	End')
+GO
+
+IF NOT EXISTS (SELECT * FROM sys.sysobjects WHERE id = OBJECT_ID(N'dbo.sp_AddToRecipe') AND type = N'P')
+	Exec('Create Procedure dbo.sp_AddToRecipe 
+		@bName nchar(30),
+		@bNguyenLieu nchar(30),
+		@nlDinhLuong float
+	As Begin
+		Insert Into dbo.CongThuc
+		Values (@bName, @bNguyenLieu, @nlDinhLuong);
+	End')
+GO
+
 /*
 -- Insert ingredients
 Insert into dbo.NguyenLieu(nlName, nlGia) values 
@@ -427,13 +465,18 @@ Insert into dbo.NguyenLieu(nlName, nlGia) values
 -- Syntatic checking, delete all table after creating
 -- Comment following lines out for proper usage
 -- Start procedure deletion
+use BakeryReport;
 Drop Procedure dbo.sp_RevertAddStock;
 Drop Procedure dbo.sp_AddIngridient;
 Drop Procedure dbo.sp_AddStock;
-Drop Procedure dbo.sp_GetListIngridient;
+Drop Procedure dbo.sp_GetStockIngridient;
+Drop Procedure dbo.sp_GetRecipeIngridient;
 Drop Procedure dbo.sp_MakeCake;
 Drop Procedure dbo.sp_RevertMakeCake;
 Drop Procedure dbo.sp_RevertAddReport;
+Drop Procedure dbo.sp_GetCake;
+Drop Procedure dbo.sp_AddCake;
+Drop Procedure dbo.sp_AddToRecipe;
 -- End procedure deletion
 -- Start Table deletion
 drop table dbo.TonKho

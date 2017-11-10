@@ -41,3 +41,4 @@ Exec dbo.sp_AddIngridient N'Trứng', 2200, 5;
 Select * From dbo.NguyenLieu;
 Select * From dbo.TonKho;
 Select * From dbo.NoiDungNhapXuat
+Select * From dbo.Banh;

@@ -71,3 +71,4 @@ C:\Users\Duy-Bach\source\repos\BakeryReport\BakeryReport\bin\Debug\Microsoft.Sql
 C:\Users\Duy-Bach\source\repos\BakeryReport\BakeryReport\bin\Debug\Microsoft.SqlServer.WmiEnum.xml
 C:\Users\Duy-Bach\source\repos\BakeryReport\BakeryReport\obj\Debug\BakeryReport.csprojResolveAssemblyReference.cache
 C:\Users\Duy-Bach\source\repos\BakeryReport\BakeryReport\obj\Debug\BakeryReport.FormAddStock.resources
+C:\Users\Duy-Bach\source\repos\BakeryReport\BakeryReport\obj\Debug\BakeryReport.FormAddRecipe.resources

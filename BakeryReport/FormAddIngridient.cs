@@ -1,10 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
-using System.Drawing;
-using System.Linq;
-using System.Text;
+using System.Data.SqlClient;
 using System.Windows.Forms;
 
 namespace BakeryReport
@@ -24,12 +19,23 @@ namespace BakeryReport
          */
         private void btn_ok_Click(object sender, EventArgs e)
         {
-            ingridientName = txt_ingridientName.Text;
+            ingridientName = txt_ingridientName.Text.Trim().Trim('\t');
             price = int.Parse(txt_Price.Text);
             quantity = float.Parse(txt_quantity.Text);
-            // TODO: Call database to Insert
-            (new DatabaseHelper()).DbAddIngridient(ingridientName, price, quantity);
-            this.Close();
+            try
+            {
+                (new DatabaseHelper()).DbAddIngridient(ingridientName, price, quantity);
+                this.Close();
+            }
+            catch (SqlException ex)
+            {
+                MessageBox.Show(
+                    "Tên nguyên liệu vừa nhập đã có trong kho," +
+                    " xin vui lòng kiểm tra lại tên nguyên liệu hoặc nhập tên nguyên liệu bánh khác",
+                    "Nguyên liệu đã có trong kho",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Error);
+            }
         }
 
         /* Only accepts integer here

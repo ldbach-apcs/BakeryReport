@@ -13,26 +13,26 @@ namespace BakeryReport
         public FormAddStock()
         {
             InitializeComponent();
-            LoadData();
+            LoadListIngridients();
             UpdateUi();
         }
 
         private void btn_AddStock_Click(object sender, EventArgs e)
         {
-            UploadData();
+            AddToStock();
         }
 
-        private void LoadData()
+        private void LoadListIngridients()
         {
-            ingridients = helper.DbGetAllIngridient();
+            ingridients = helper.DbGetStockIngridient();
         }
 
         private void UpdateUi()
         {
-            InitializeTable();
+            InitTable();
         }
 
-        private void InitializeTable()
+        private void InitTable()
         {
             table = table_addStock;
             table.Controls.Clear();
@@ -59,6 +59,7 @@ namespace BakeryReport
             {
                 TextBox textBox = new TextBox();
                 textBox.Text = string.Format("{0}", ingridients[i].nlGia);
+                textBox.TextAlign = HorizontalAlignment.Center;
                 table.Controls.Add(textBox, 2, i);
             }
         }
@@ -72,6 +73,7 @@ namespace BakeryReport
             {
                 TextBox textBox = new TextBox();
                 textBox.Text = string.Format("{0}", ingridients[i].nlSoLuong);
+                textBox.TextAlign = HorizontalAlignment.Center;
                 table.Controls.Add(textBox, 1, i);
             }
         }
@@ -93,7 +95,7 @@ namespace BakeryReport
             }
         }
 
-        private void UploadData()
+        private void AddToStock()
         {
             for (int i = 0; i < ingridients.Count; ++i)
             {
